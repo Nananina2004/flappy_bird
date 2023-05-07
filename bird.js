@@ -38,6 +38,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 function start_game() {
+    document.getElementById('bird').style.display = 'block';
     game_state = "Play";
     const tapText = document.querySelector('.tap')
     tapText.style.display = 'none';
@@ -50,39 +51,84 @@ function update() {
         bird.velocity += bird.gravity;
         bird.y += bird.velocity;
         bird.y = Math.min(bird.y, 550);
-
         if (bird.y >= 550) {
+            score++;
             gameOver();
             dieSound.play();
             bird.y = 550;
         }
-
         const birdElement = document.getElementById('bird');
         birdElement.style.top = bird.y + 'px';
     }
-
-    requestAnimationFrame(update);
 }
 
 function generateColumn() {
-    const gameArea = document.getElementById('game-area');
+    const gameArea = document.querySelector('.game-area');
+    gameArea.style.display = 'flex';
+    gameArea.style.flexDirection = 'row';
+    let columnCount = 0;
 
-    const columnGap = 200;
-    const minHeight = 50;
-    const maxHeight = gameArea.clientHeight - columnGap - 2 * minHeight;
 
-    const randomHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+    setInterval(()=>{
+        const div1 = document.querySelector('.bird');
+        const div2 = document.querySelectorAll('.top');
+        const div3 = document.querySelectorAll('.bottom');
 
-    const columnTop = document.createElement('div');
-    columnTop.classList.add('column', 'column-top');
-    columnTop.style.height = randomHeight + 'px';
+        function doDivsOverlap(div1, div2) {
+            const rect1 = div1.getBoundingClientRect();
+            for (let i = 0; i < div2.length; i++) {
+                const rect2 = div2[i].getBoundingClientRect();
+                if (!(rect1.right < rect2.left ||
+                    rect1.left > rect2.right ||
+                    rect1.bottom < rect2.top ||
+                    rect1.top > rect2.bottom)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-    const columnBottom = document.createElement('div');
-    columnBottom.classList.add('column', 'column-bottom');
-    columnBottom.style.height = gameArea.clientHeight - randomHeight - columnGap + 'px';
+        if (doDivsOverlap(div1, div2) || doDivsOverlap(div1, div3)) {
+            gameOver();
+        }
 
-    gameArea.appendChild(columnTop);
-    gameArea.appendChild(columnBottom);
+    }, 20);
+
+    setInterval(() => {
+        setInterval(() => {
+            const columns = document.querySelectorAll('.column');
+
+            columns.forEach((column) => {
+                let margin = parseInt(column.style.marginLeft) || 0;
+                setInterval(() => {
+                    margin += 5;
+                    column.style.marginLeft = `${margin}px`;
+                }, 30);
+            });
+        }, 2000);
+
+        const Column = document.createElement('div');
+
+        const topColumn = document.createElement('div');
+        topColumn.classList.add('column', 'top');
+        topColumn.style.height = `${Math.random() * 250 + 10}px`;
+        topColumn.style.width = '80px';
+        topColumn.style.backgroundColor = 'green';
+        topColumn.style.marginBottom = '180px';
+        Column.appendChild(topColumn);
+
+        const bottomColumn = document.createElement('div');
+        bottomColumn.classList.add('column', 'bottom');
+        bottomColumn.style.width = '80px';
+        bottomColumn.style.height = `calc(100% - ${topColumn.style.height} - 200px)`;
+        bottomColumn.style.backgroundColor = 'green';
+        Column.appendChild(bottomColumn);
+        gameArea.appendChild(Column);
+        gameArea.style.justifyContent = 'flex-end'
+        columnCount++;
+        score++;
+
+    }, 2000);
 }
 
 function gameOver() {
@@ -92,9 +138,9 @@ function gameOver() {
 
     const sc = document.querySelector('.score');
     const msc = document.querySelector('.max_score');
-    sc.textContent = score + '';
+    sc.textContent = score - 1 + '';
     msc.textContent = max_score + '';
+    document.getElementById('bird').style.display = 'none';
 }
 
-
-
+setInterval(update, 20);
